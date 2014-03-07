@@ -1,0 +1,6 @@
+How to play:
+- Unzip the DR1-images-by-lesions.zip file into the datasets/DR1-images-by-lesions folder
+- Unzip the DR2-images-by-lesions.zip file into the datasets/DR2-images-by-lesions folder
+- Unzip the DR1-additional-marked-images.zip file into the datasets/DR1-additional-marked-images folder
+- Unzip the DR2-images-by-referral.zip file into the datasets/DR2-images-by-referral folder
+- Unzip the markings.zip file into the markings folder
