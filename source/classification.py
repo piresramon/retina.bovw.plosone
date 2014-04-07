@@ -22,14 +22,14 @@ SVM = "./ext/svm/"
 
 # ShowOptions function
 def showOptions():
-	print "-h \t\t show options"
-	print "-train \t\t define training dataset"
-	print "-test \t\t define test dataset"
-	print "-l \t\t define a specific DR-related lesion"
-	print "-low \t\t define a specific low-level technique"
-	print "-mid \t\t define a specific mid-level technique"
-	print "-plot \t\t use this parameter to plot the ROC curves"
-	print "-svm \t define the path to SVM"
+	print "-h : show options"
+	print "-train dataset : define the training dataset (default DR1)\n\tDR1 -- DR1 as the training dataset\n\tDR2 -- DR2 as the training dataset"
+	print "-test dataset : define test dataset (default DR2)\n\tDR1 -- DR1 as the test dataset\n\tDR2 -- DR2 as the test dataset"
+	print "-l lesion : define a specific DR-related lesion (default [exsudato-duro, hemorragia-superficial, hemorragia-profunda, lesoes-vermelhas, mancha-algodonosa, drusas-maculares, imagem-normal])\n\texsudato-duro\t\t -- Hard Exudates\n\themorragia-superficial\t -- Superficial Hemorrhages\n\themorragia-profunda\t -- Deep Hemorrhages\n\tlesoes-vermelhas\t -- Red Lesions\n\tmancha-algodonosa\t -- Cotton-wool Spots\n\tdrusas-maculares\t -- Drusen"
+	print "-low technique : define a specific low-level technique (default [sparse, dense])\n\tsparse -- Sparse low-level feature extraction\n\tdense  -- Dense low-level feature extraction"
+	print "-mid technique : define a specific mid-level technique (default [hard, semi, soft])\n\thard -- Hard-Sum coding/pooling\n\tsemi -- Semi-Soft-Sum coding/pooling\n\tsoft -- Soft-Max coding/pooling"
+	print "-svm path : define the path to the svm algorithm (default ./ext/svm/)"
+	print "-plot : use this parameter to plot the ROC curves (default False)"
 	quit()
 
 # take the parameters
@@ -231,21 +231,20 @@ for lesion in lesions:
 			# Run the grid-search
 			print('Cross validation...')			
 			cmd = '%s -svmtrain "%s" -gnuplot "%s" "%s"' % (SVM + "grid.py", SVM + "svm-train", "/usr/bin/gnuplot", scaledTraining)
-			os.system(cmd + "  > tmp/info.txt 2> tmp/errors.txt")
+			os.system(cmd + "  > tmp/info-" + techniqueLow + "-" + techniqueMid + "-" + lesion + ".txt 2> tmp/errors.txt")
 			
-			line = open("tmp/info.txt","rb").readlines()
+			line = open("tmp/info-" + techniqueLow + "-" + techniqueMid + "-" + lesion + ".txt","rb").readlines()
 			last_line = line[-1:][0]
 			c,g,rate = map(float,last_line.split())
 			
-			"""
-			f = Popen(cmd, shell = True, stdout = PIPE).stdout
-			line = ''
-			while True:
-				last_line = line
-				line = f.readline()
-				if not line: break
-			c,g,rate = map(float,last_line.split())
-			"""
+			#f = Popen(cmd, shell = True, stdout = PIPE).stdout
+			#line = ''
+			#while True:
+			#	last_line = line
+			#	line = f.readline()
+			#	if not line: break
+			#c,g,rate = map(float,last_line.split())
+			
 			print('Best c=%s, g=%s CV rate=%s' % (c,g,rate))
 	
 			wnormais = (float(len(positiveTraining)/float(len(positiveTraining) + len(negativeTraining))) * 2.0)
@@ -339,9 +338,9 @@ for lesion in lesions:
 			last_x = -1
 			last_y = -1
 			operatingPointsFile = open(directory + techniqueLow + "/" + techniqueMid + "/operating-points-" + lesion + "-scale.dat", "wb")
-			finalShifts = []
+			shiftsSensSpec = []
+			shiftsSensSpecFile = open(directory + techniqueLow + "/" + techniqueMid + "/shifts-sens-spec-" + lesion + ".dat", "wb")
 			indShifts = 0
-			sensitivitySpecicificity = []
 			
 			for line in lines:
 				line = line.split()
@@ -353,23 +352,28 @@ for lesion in lesions:
 					last_x = xx
 					last_y = yy
 					operatingPointsFile.write(str(xx) + "\t" + str(yy) + "\n")
-					finalShifts.append(shifts[indShifts])
-					sensitivitySpecicificity.append(("{0:0.1f}%".format(yy*100), "{0:0.1f}%".format((1-xx)*100)))
+					if xx <= 0.5 and yy > 0.5:
+						shiftsSensSpec.append((str(shifts[indShifts]), " {0:0.1f}%".format(yy*100), " {0:0.1f}%".format((1-xx)*100)))
 				indShifts += 1
-					
-					
-			#for i in range(len(finalShifts)):
-			#	print finalShifts[i], "\t(" + sensitivitySpecicificity[i][0] + ", " + sensitivitySpecicificity[i][1] + ")"
-			#shift_user = raw_input('Enter the desired shift!: ')
-			#print "You have the following results: \n" + checkSensSpec(float(shift_user))
-				
-							
-			#if last_x != 0.0 and last_y != 0.0:
-			#	operatingPointsFile.write("0.0\t0.0\n")
 			operatingPointsFile.close()
+					
+					
+			sens_aux = ""
+			(last_shift, last_sens, last_spec) = shiftsSensSpec[0]
+			for (shift, sens, spec) in shiftsSensSpec[1:]:
+				if sens != last_sens:
+					#grava					
+					shiftsSensSpecFile.write(last_shift + " " + last_sens + " " + last_spec + "\n")
+					if spec == " 100.0%": break
+				last_shift = shift
+				last_sens = sens
+				last_spec = spec
+			shiftsSensSpecFile.write(shift + " " + sens + " " + spec + "\n")
+			shiftsSensSpecFile.close()
 			
+						
 			stop = timeit.default_timer()
-			print "Model created in " + common_functions.convertTime(stop - start)
+			#print "Model created in " + common_functions.convertTime(stop - start)
 			
 			auc = numpy.trapz(y, x) * -100
 			print u"AUC = {0:0.1f}%\n\n".format(auc)
@@ -377,7 +381,10 @@ for lesion in lesions:
 			
 			
 			# Clear
-			os.system("rm " + lesion + "-training.hist.scale.png " + lesion + "-training.hist.scale.out")
+			if os.path.exists(lesion + "-training.hist.scale.png"):
+				os.system("rm " + lesion + "-training.hist.scale.png")
+			if os.path.exists(lesion + "-training.hist.scale.out"):
+				os.system("rm " + lesion + "-training.hist.scale.out")
 			
 			
 	# Plot the ROC curves

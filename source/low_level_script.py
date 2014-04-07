@@ -17,14 +17,14 @@ SURF = "./ext/surf/surf.ln"
 
 # ShowOptions function
 def showOptions():
-	print "-h \t\t show options"
-	print "-train \t\t define training dataset"
-	print "-test \t\t define test dataset"
-	print "-l \t\t define a specific DR-related lesion"
-	print "-t \t\t define a specific low-level technique"
-	print "-t1 \t\t define the threshold for trainig dataset"
-	print "-t2 \t\t define the threshold for test dataset"
-	print "-surf \t\t define the path to surf"
+	print "-h : show options"
+	print "-train dataset : define the training dataset (default DR1)\n\tDR1 -- DR1 as the training dataset\n\tDR2 -- DR2 as the training dataset"
+	print "-test dataset : define test dataset (default DR2)\n\tDR1 -- DR1 as the test dataset\n\tDR2 -- DR2 as the test dataset"
+	print "-l lesion : define a specific DR-related lesion (default [exsudato-duro, hemorragia-superficial, hemorragia-profunda, lesoes-vermelhas, mancha-algodonosa, drusas-maculares, imagem-normal])\n\texsudato-duro\t\t -- Hard Exudates\n\themorragia-superficial\t -- Superficial Hemorrhages\n\themorragia-profunda\t -- Deep Hemorrhages\n\tlesoes-vermelhas\t -- Red Lesions\n\tmancha-algodonosa\t -- Cotton-wool Spots\n\tdrusas-maculares\t -- Drusen\n\timagem-normal\t\t -- Normal Images"
+	print "-low technique : define a specific low-level technique (default [sparse, dense])\n\tsparse -- Sparse low-level feature extraction\n\tdense  -- Dense low-level feature extraction"
+	print "-t1 threshold : define the threshold for trainig dataset (default 3500)"
+	print "-t2 threshold : define the threshold for test dataset (default 3500)"
+	print "-surf path : define the path to the surf algorithm (default ./ext/surf/surf.ln)"
 	quit()
 
 # take the parameters
@@ -35,7 +35,7 @@ if len(sys.argv) > 1:
 		elif op == "-train": train = sys.argv[i+1]
 		elif op == "-test": test = sys.argv[i+1]
 		elif op == "-l": lesions = [sys.argv[i+1]]
-		elif op == "-t": techniques = [sys.argv[i+1]]
+		elif op == "-low": techniques = [sys.argv[i+1]]
 		elif op == "-t1": t1 = sys.argv[i+1]
 		elif op == "-t2": t2 = sys.argv[i+1]
 		elif op == "-surf": SURF = sys.argv[i+1]
@@ -132,11 +132,10 @@ for type in [train,test]:
 ################################################
 
 if train == "DR1":
-	listImages = os.listdir("datasets/DR1-additional-marked-images/")
-
-	print "Low-level feature extraction for additional images - used just because contain marked regions"
-
+	print "Low-level feature extraction for additional images (DR1) - used just because contain marked regions"
 	start = timeit.default_timer()
+	
+	listImages = os.listdir("datasets/DR1-additional-marked-images/")
 	for im in listImages:
 		sys.stdout.write(". ")
 		sys.stdout.flush()
@@ -156,5 +155,48 @@ if train == "DR1":
 	
 	stop = timeit.default_timer()
 	sys.stdout.write(common_functions.convertTime(stop - start) + "\n")
-
+	
+	
+	
+	print "Low-level feature extraction for additional images (DR2) - images labeled according to referral, but not labeled with DR lesions"
+	start = timeit.default_timer()
+	
+	listImages = os.listdir("datasets/DR2-images-by-referral/positive/")
+	for im in listImages:
+		sys.stdout.write(". ")
+		sys.stdout.flush()
+		im_special = common_functions.specialName(im)
+	
+		for technique in techniques:
+			if os.path.exists(directory + technique + "/DR2/" + im[:-3] + "key"): continue
+			fAux = open(directory + technique + "/DR2/" + im[:-3] + "key","wb")
+						
+			if technique == "sparse":
+				sparseExtraction(im_special, technique, "DR2", "datasets/DR2-images-by-referral/positive")
+				common_functions.organizeFileSurfToDescriptor(directory + technique + "/DR2/" + im[:-3] + "key")
+				common_functions.filterPoints("DR2", technique, im)
+			else:
+				denseExtraction(im, im_special, technique, "DR2", "datasets/DR2-images-by-referral/positive")
+				common_functions.organizeFileSurfToDescriptor(directory + technique + "/DR2/" + im[:-3] + "key")
+	
+	listImages = os.listdir("datasets/DR2-images-by-referral/negative/")
+	for im in listImages:
+		sys.stdout.write(". ")
+		sys.stdout.flush()
+		im_special = common_functions.specialName(im)
+	
+		for technique in techniques:
+			if os.path.exists(directory + technique + "/DR2/" + im[:-3] + "key"): continue
+			fAux = open(directory + technique + "/DR2/" + im[:-3] + "key","wb")
+						
+			if technique == "sparse":
+				sparseExtraction(im_special, technique, "DR2", "datasets/DR2-images-by-referral/negative")
+				common_functions.organizeFileSurfToDescriptor(directory + technique + "/DR2/" + im[:-3] + "key")
+				common_functions.filterPoints("DR2", technique, im)
+			else:
+				denseExtraction(im, im_special, technique, "DR2", "datasets/DR2-images-by-referral/negative")
+				common_functions.organizeFileSurfToDescriptor(directory + technique + "/DR2/" + im[:-3] + "key")
+	
+	stop = timeit.default_timer()
+	sys.stdout.write(common_functions.convertTime(stop - start) + "\n")
 ################################################

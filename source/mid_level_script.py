@@ -2,6 +2,7 @@
 import os, sys
 import timeit
 import numpy, math
+import scipy.spatial.distance as sp
 import common_functions
 
 
@@ -14,15 +15,17 @@ test = "DR2"
 lesions = ["exsudato-duro","hemorragia-superficial","hemorragia-profunda","lesoes-vermelhas","mancha-algodonosa","drusas-maculares"]
 techniquesLow = ["sparse","dense"]
 techniquesMid = ["hard","semi","soft"]
+image = ""
 
 # ShowOptions function
 def showOptions():
-	print "-h \t\t show options"
-	print "-train \t\t define training dataset"
-	print "-test \t\t define test dataset"
-	print "-l \t\t define a specific DR-related lesion"
-	print "-low \t\t define a specific low-level technique"
-	print "-mid \t\t define a specific mid-level technique"
+	print "-h : show options"
+	print "-train dataset : define the training dataset (default DR1)\n\tDR1 -- DR1 as the training dataset\n\tDR2 -- DR2 as the training dataset"
+	print "-test dataset : define test dataset (default DR2)\n\tDR1 -- DR1 as the test dataset\n\tDR2 -- DR2 as the test dataset"
+	print "-l lesion : define a specific DR-related lesion (default [exsudato-duro, hemorragia-superficial, hemorragia-profunda, lesoes-vermelhas, mancha-algodonosa, drusas-maculares)\n\texsudato-duro\t\t -- Hard Exudates\n\themorragia-superficial\t -- Superficial Hemorrhages\n\themorragia-profunda\t -- Deep Hemorrhages\n\tlesoes-vermelhas\t -- Red Lesions\n\tmancha-algodonosa\t -- Cotton-wool Spots\n\tdrusas-maculares\t -- Drusen"
+	print "-low technique : define a specific low-level technique (default [sparse, dense])\n\tsparse -- Sparse low-level feature extraction\n\tdense  -- Dense low-level feature extraction"
+	print "-mid technique : define a specific mid-level technique (default [hard, semi, soft])\n\thard -- Hard-Sum coding/pooling\n\tsemi -- Semi-Soft-Sum coding/pooling\n\tsoft -- Soft-Max coding/pooling"
+	print "-i image : define the image name (used only for cases where we are interested in describing only one image)"
 	quit()
 
 # take the parameters
@@ -35,6 +38,7 @@ if len(sys.argv) > 1:
 		elif op == "-l": lesions = [sys.argv[i+1]]
 		elif op == "-low": techniquesLow = [sys.argv[i+1]]
 		elif op == "-mid": techniquesMid = [sys.argv[i+1]]
+		elif op == "-i": image = sys.argv[i+1]
 ################################################
 
 
@@ -55,48 +59,24 @@ for techniqueMid in techniquesMid:
 ################################################
 # HARD-SUM
 ################################################
-def hardSum(ArqPoIs, ArqWords, ArqOut, numeroPalavras, label):
+def hardSum(PoIs, Words, ArqOut, numeroPalavras, label):
 	ArqOut = open(ArqOut,"wb")
 	ArqOut.write(label + " ")
-	out = label + " "
-	PoIsTemp = open(ArqPoIs, "rb").readlines()
-	WordsTemp = open(ArqWords, "rb").readlines()
 	histograma = [0 for i in range(numeroPalavras)]
 	
-	PoIs = []
-	for i in range(2,len(PoIsTemp),2):
-		l = PoIsTemp[i].split()
-		line = []
-		for ll in l:
-			line.append(float(ll))
-		PoIs.append(line)
-		
-	Words = []
-	for w in WordsTemp[1:]:
-		l = w.split()
-		line = []
-		for ll in l:
-			line.append(float(ll))
-		Words.append(line)
-		
-	for p in range(len(PoIs)):
-		minimo = 100
-		for i in range(len(Words)):
-			dist = numpy.linalg.norm(numpy.array(Words[i])-numpy.array(PoIs[p]))
-			if dist < minimo:
-				minimo = dist
-				ind = i
+	distMatrix = sp.cdist(PoIs, Words, 'euclidean')								# first points, after codewords. Return a len(PoIs) x len(Words) matrix of distances
+	
+	for i in range(len(PoIs)):
+		minimum = min(distMatrix[i])
+		ind = numpy.where(distMatrix[i]==minimum)[0][0]
 		histograma[ind] += 1
 
+	
 	histograma = common_functions.l1norm(histograma)	
 	
 	for h in histograma:
 		ArqOut.write(str(h) + " ")
-		out += str(h) + " "
 	ArqOut.close()
-			
-	#print "DISTANCE = " + str(numpy.linalg.norm(numpy.array(Words[0])-numpy.array(PoIs[0])))
-	return out
 ################################################
 
 
@@ -104,49 +84,20 @@ def hardSum(ArqPoIs, ArqWords, ArqOut, numeroPalavras, label):
 ################################################
 # SEMI-SOFT
 ################################################
-def semiSoft(ArqPoIs, ArqWords, ArqOut, numeroPalavras, label):
+def semiSoft(PoIs, Words, ArqOut, numeroPalavras, label):
 	ArqOut = open(ArqOut,"wb")
 	ArqOut.write(label + " ")
-	out = label + " "
-	PoIsTemp = open(ArqPoIs, "rb").readlines()
-	WordsTemp = open(ArqWords, "rb").readlines()
+	distances = numpy.zeros(numeroPalavras)
 	
-	PoIs = []
-	for i in range(2,len(PoIsTemp),2):
-		l = PoIsTemp[i].split()
-		line = []
-		for ll in l:
-			line.append(float(ll))
-		PoIs.append(line)
+	distances = sp.cdist(Words, PoIs, 'euclidean')								# first codewords, after PoIs. Return a len(Words) x len(PoIs) matrix of distances
+	distances = [ 1/min(d) for d in distances ]
 		
-	Words = []
-	for w in WordsTemp[1:]:
-		l = w.split()
-		line = []
-		for ll in l:
-			line.append(float(ll))
-		Words.append(line)
 	
-	distances = []
-	for i in range(0,numeroPalavras):
-		distances.append(0)
-	
-	for poi in PoIs:
-		for i in range(len(Words)):
-			dist = numpy.linalg.norm(numpy.array(Words[i])-numpy.array(poi))
-			if dist == 0: continue
-			if 1/dist > distances[i]:
-				distances[i] = 1/dist
-		
 	distances = common_functions.l1norm(distances)
 	
 	for d in distances:
 		ArqOut.write(str(d) + " ")
-		out += str(d) + " "
 	ArqOut.close()
-				
-	#print "DISTANCE = " + str(numpy.linalg.norm(numpy.array(Words[0])-numpy.array(PoIs[0])))
-	return out
 ################################################
 
 
@@ -158,64 +109,32 @@ def gaussiankernel(sigma, x):
 	return (1.0/(math.sqrt(sigma*2*math.pi)))*math.exp(-(x)**2/(2.0*sigma**2))
 	
 
-def softMax(ArqPoIs, ArqWords, ArqOut, numeroPalavras, label):
+def softMax(PoIs, Words, ArqOut, numeroPalavras, label):
 	ArqOut = open(ArqOut,"wb")
 	ArqOut.write(label + " ")
-	out = label + " "
-	PoIsTemp = open(ArqPoIs, "rb").readlines()
-	WordsTemp = open(ArqWords, "rb").readlines()
 	
-	PoIs = []				#Coloca os pontos de interesse em um vetor
-	for i in range(2,len(PoIsTemp),2):
-		l = PoIsTemp[i].split()
-		line = []
-		for ll in l:
-			line.append(float(ll))
-		PoIs.append(line)
-		
-	Words = []				#Coloca as palavras visuais em um vetor
-	for w in WordsTemp[1:]:
-		l = w.split()
-		line = []
-		for ll in l:
-			line.append(float(ll))
-		Words.append(line)
+	# distances - Matriz n * V (número de pontos * número de palavras) que calculará apenas uma vez as distâncias
+	distances = sp.cdist(PoIs, Words, 'euclidean')								# first points, after codewords. Return a len(PoIs) x len(Words) matrix of distances
+	distances = [ gaussiankernel(45.0, dist) for dist in numpy.reshape(distances, (1,distances.size))[0] ]	# apply the gaussian kernel
+	distances = numpy.reshape(distances, (len(PoIs), len(Words)))						# put again in the format len(PoIs) x len(Words)
 	
-	distances = []				#Matriz n * V (número de pontos * número de palavras) que calculará apenas uma vez as distâncias
-	for i in range(0,numeroPalavras):
-		line = []
-		for j in range(0,len(PoIs)):
-			dist = numpy.linalg.norm(numpy.array(Words[i])-numpy.array(PoIs[j]))
-			dist = gaussiankernel(45.0, dist)
-			line.append(dist)
-		distances.append(line)
-	
-	distToAll = []				#Vetor que armazenará para cada ponto o somatório das distâncias para todas as palavras
-	for i in range(0,len(PoIs)):	
-		s = 0
-		for j in range(0,numeroPalavras):
-			s += distances[j][i]
-		distToAll.append(s)
+	# distToAll - Vetor que armazenará para cada ponto o somatório das distâncias para todas as palavras
+	distToAll = []
+	for point in distances:
+		distToAll.append(sum(point)) 
+	distToAll = numpy.asarray(distToAll)
 	
 	features = []
-	
-	for i in range(0,numeroPalavras):	#Para cada palavra, calcula o Codeword uncertainty (Visual Word Ambiguity, Gemert et al.)
-		maximo = 0			#Substituímos average pooling por max pooling
-		for j in range(0,len(PoIs)):
-			d = distances[i][j]/distToAll[j]
-			if d > maximo: maximo = d
-		features.append(maximo)
-		#out += str(maximo) + " "
+	distances = numpy.transpose(distances)					# transpose. Format len(Words) x len(PoIs)
+	division = numpy.divide(distances, distToAll)				# Equivalent to divide the distance of codeword i to PoI j by the summation of the distances of PoI j to all codewords
+	features = [ max(dist) for dist in division ]				# get the maximum activation for each codeword
 		
+	
 	features = common_functions.l1norm(features)
 	
 	for f in features:
 		ArqOut.write(str(f) + " ")
-		out += str(f) + " "
-	ArqOut.close()
-	
-	#print out	
-	return out
+	ArqOut.close()	
 ################################################
 
 
@@ -226,7 +145,7 @@ def softMax(ArqPoIs, ArqWords, ArqOut, numeroPalavras, label):
 en = dict(zip(["exsudato-duro","hemorragia-superficial","hemorragia-profunda","lesoes-vermelhas","mancha-algodonosa","drusas-maculares","imagem-normal"], ["Hard Exudates","Superficial Hemorrhages","Deep Hemorrhages","Red Lesions","Cotton-wool Spots","Drusen","Normal Images"]))
 
 print "################################################"
-print "# Low-level feature extraction"
+print "# Mid-level feature extraction"
 print "################################################"
 
 for techniqueMid in techniquesMid:
@@ -235,49 +154,69 @@ for techniqueMid in techniquesMid:
 		else: size = 1500
 		for type in [train,test]:
 			for lesion in lesions:
-				print "Extracting features for " + en[lesion] + "\nLow-level: " + techniqueLow + ".\nMid-level: " + techniqueMid
+				print "Extracting features for " + en[lesion] + "\nLow-level: " + techniqueLow + "\nMid-level: " + techniqueMid
 				start = timeit.default_timer()
 				sys.stdout.write(". ")
 				sys.stdout.flush()
 				
-				# define the codebook
-				CodebookFile = "codebooks/" + techniqueLow + "/complete-codebook-" + lesion  + ".cb"
+				# get the codebook
+				CodebookTemp = open("codebooks/" + techniqueLow + "/complete-codebook-" + lesion  + ".cb", "rb").readlines()
+				Codebook = []
+				for cb in CodebookTemp[1:]:
+					Codebook.append([ float(c) for c in cb.split() ])
+				Codebook = numpy.asarray(Codebook)
 				
-				# define the the directory of the input file (points of interest)
-				PoIsDir = "low-level/" + techniqueLow + "/" + type + "/"
+				# define the directory of the input file (points of interest)
+				if image == "":
+					PoIsDir = "low-level/" + techniqueLow + "/" + type + "/"
+				else:
+					PoIsDir = "low-level/" + techniqueLow + "/DR2/"
 				
-				# define the the directory of the output file (histogram)
-				OutDir = "mid-level/" + techniqueLow + "/" + type + "/" + techniqueMid + "/" + lesion + "/"
+				# define the directory of the output file (histogram)
+				if image == "":
+					OutDir = "mid-level/" + techniqueLow + "/" + type + "/" + techniqueMid + "/" + lesion + "/"
+				else:	# Interest in describing only one image
+					if not os.path.exists("mid-level/" + techniqueLow + "/DR2/" + techniqueMid + "/additional/" + lesion):
+						os.makedirs("mid-level/" + techniqueLow + "/DR2/" + techniqueMid + "/additional/" + lesion)
+					OutDir = "mid-level/" + techniqueLow + "/DR2/" + techniqueMid + "/additional/" + lesion + "/"
 				
 				for label in ["+1","-1"]:
 					# describe the normal images
 					if label == "-1": lesion = "imagem-normal"
 								
 					lesion_en = en[lesion]
-					if type == "DR2" and (lesion == "hemorragia-superficial" or lesion == "hemorragia-profunda"):
-						listImages = os.listdir("datasets/" + type + "-images-by-lesions/Red Lesions")
-					else:
-						listImages = os.listdir("datasets/" + type + "-images-by-lesions/" + lesion_en)
+					if image == "":
+						if type == "DR2" and (lesion == "hemorragia-superficial" or lesion == "hemorragia-profunda"):
+							listImages = os.listdir("datasets/" + type + "-images-by-lesions/Red Lesions")
+						else:
+							listImages = os.listdir("datasets/" + type + "-images-by-lesions/" + lesion_en)
+					else: listImages = [image]
 				
 					for im in listImages:
 						im_special = common_functions.specialName(im)
 						if os.path.exists(OutDir + im[:-3] + "hist"): continue
-					
-						# define the input file (points of interest)
-						PoIsFile = PoIsDir + im[:-3] + "key"
-					
+						
 						# define the output file (histogram)
 						OutFile = OutDir + im[:-3] + "hist"
+						f = open(OutFile,"wb")
 					
+						# get the points of interest
+						PoIsTemp = open(PoIsDir + im[:-3] + "key","rb").readlines()
+						PoIs = []
+						for i in range(2,len(PoIsTemp),2):
+							PoIs.append([ float(p) for p in PoIsTemp[i].split() ])
+						PoIs = numpy.asarray(PoIs)				
+									
 						sys.stdout.write(". ")
 						sys.stdout.flush()
 			
 						if techniqueMid == "hard":
-							hardSum(PoIsFile, CodebookFile, OutFile, size, label)
+							hardSum(PoIs, Codebook, OutFile, size, label)
 						elif techniqueMid == "soft":
-							softMax(PoIsFile, CodebookFile, OutFile, size, label)
+							softMax(PoIs, Codebook, OutFile, size, label)
 						else:				#if techniqueMid == "semi":
-							semiSoft(PoIsFile, CodebookFile, OutFile, size, label)
+							semiSoft(PoIs, Codebook, OutFile, size, label)
+						
 				stop = timeit.default_timer()
 				sys.stdout.write(" Done in " + common_functions.convertTime(stop - start) + "\n")
 ################################################

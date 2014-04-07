@@ -15,12 +15,12 @@ KMEANS = "./ext/kmeans/kmltest"
 
 # ShowOptions function
 def showOptions():
-	print "-h \t\t show options"
-	print "-train \t\t define training dataset"
-	print "-l \t\t define a specific DR-related lesion"
-	print "-low \t\t define a specific low-level technique"
-	print "-size \t\t length of the codebook (per class)"
-	print "-kmeans \t define the path to k-means"
+	print "-h : show options"
+	print "-train dataset : define the training dataset (default DR1)\n\tDR1 -- DR1 as the training dataset\n\tDR2 -- DR2 as the training dataset"
+	print "-l lesion : define a specific DR-related lesion (default [exsudato-duro, hemorragia-superficial, hemorragia-profunda, lesoes-vermelhas, mancha-algodonosa, drusas-maculares, imagem-normal])\n\texsudato-duro\t\t -- Hard Exudates\n\themorragia-superficial\t -- Superficial Hemorrhages\n\themorragia-profunda\t -- Deep Hemorrhages\n\tlesoes-vermelhas\t -- Red Lesions\n\tmancha-algodonosa\t -- Cotton-wool Spots\n\tdrusas-maculares\t -- Drusen\n\timagem-normal\t\t -- Normal Images"
+	print "-low technique : define a specific low-level technique (default [sparse, dense])\n\tsparse -- Sparse low-level feature extraction\n\tdense  -- Dense low-level feature extraction"
+	print "-size s : length of the codebook (default 250 for sparse (resulting in a codebook of 500 codewords) and 125 for dense (resulting in a codebook of 1500 codewords))"
+	print "-kmeans path : define the path to the k-means algorithm (default ./ext/kmeans/kmltest)"
 	quit()
 
 # take the parameters
