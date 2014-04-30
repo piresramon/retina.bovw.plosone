@@ -23,7 +23,7 @@ For the extraction of low-level features, two techniques are explored:
 For the extraction of mid-level features, three methods are used, one of them was proposed in the current work:
 (i) Hard assignment: associates each descriptor fully and only to its closest code word in the codebook. The advantage of these schemes is the sparsity of the codes; the disadvantages are that they are subject to imprecision and noise when the descriptors fall in regions close to the limit between the code words in the feature space;
 (ii) Soft assignment: there are several “soft” assignment schemes developed to deal with the deficiencies associated with the hard assignment treatment. The option employed here was code word uncertainty, which has not been explored as a DR-related lesion detector but is generally considered the most effective for other classification tasks;
-(iii) Semi-soft assignment: soft assignment solves the boundary effects of hard assignment, but creates codes, which are too dense. A “semi-soft” scheme is often more desirable. One such scheme, designed specially for the DR-related lesion detection, is described below.
+(iii) Semi-soft assignment: soft assignment solves the boundary effects of hard assignment, but creates codes, which are too dense. A “semi-soft” scheme is often more desirable. One such scheme was designed specially for the DR-related lesion detection.
 
 The referral vs. non-referral classification is performed by the fusion of the individual DR-related lesions detectors. The most advanced way to perform the fusion is using a meta-classification approach. This referral-decider operates on high-level features obtained from a vector of scores consisting of the individual lesion detectors. The referral-decider is then trained using independent annotations.
 
@@ -66,7 +66,7 @@ Before run the code, it's necessary to download the datasets and organize some d
 (ii) Uncompress DR2-images-by-lesions.zip  at source/datasets/DR2-images-by-lesions/ directory;
 (ii) Uncompress DR1-images-by-lesions.zip at source/datasets/DR1-images-by-lesions/ directory;
 (iv) Uncompress DR1-additional-marked-images.zip at source/datasets/DR1-additional-marked-images/ directory;
-(v) Uncompress markings.zip at source/markings/ directory.  
+(v) Uncompress markings.zip at source/markings/ directory.
 
 'low_level_script.py' Usage
 ============================
@@ -275,12 +275,12 @@ Additional Information
 
 If you find retina.bovw.plosone helpful, please cite it as
 
-Pires, Ramon; F. Jelinek, Herbert; Wainer, Jacques; Valle, Eduardo; Rocha, Anderson (2014): Advancing Bag-of-Visual-Words Representations for Lesion Classification in Retinal Images [...]
+Pires, Ramon; F. Jelinek, Herbert; Wainer, Jacques; Valle, Eduardo; Rocha, Anderson (In Press): Advancing Bag-of-Visual-Words Representations for Lesion Classification in Retinal Images. PLOS ONE.
 
 retina.bovw.plosone implementation document is available at
-http://www.recod.ic.unicamp.br/~piresramon//publications/PlosOnePaper.pdf [LINK]
+http://www.recod.ic.unicamp.br/~piresramon
 
-For any questions and comments, please email piresramon@ic.unicamp.br
+For any questions and comments, please email pires.ramon@ic.unicamp.br
 
 Acknowledgments:
 This work was supported in part by São Paulo Research Foundation FAPESP (http://www.fapesp.br) under Grant 2010/05647-4 and Grant 2011/15349-3, National Counsel of Technological and Scientific Development (CNPq) (http://www.cnpq.br) under Grant 307018/2010-5 and Grant 304352/2012-8, Microsoft Research (http://research.microsoft.com) and Samsung Eletrônica da Amazônia (http://www.samsung.com). The funders had no role in study design, data collection and analysis, decision to publish, or preparation of the manuscript.
