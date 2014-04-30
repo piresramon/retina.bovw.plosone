@@ -28,8 +28,8 @@ For the extraction of mid-level features, three methods are used, one of them wa
 The referral vs. non-referral classification is performed by the fusion of the individual DR-related lesions detectors. The most advanced way to perform the fusion is using a meta-classification approach. This referral-decider operates on high-level features obtained from a vector of scores consisting of the individual lesion detectors. The referral-decider is then trained using independent annotations.
 
 retina.bovw.plosone is available at
-https://github.com/piresramon/retina.bovw.plosone
-Please read the COPYRIGHT file before using retina.bovw.plosone.
+[https://github.com/piresramon/retina.bovw.plosone](https://github.com/piresramon/retina.bovw.plosone)
+Please read the [LICENSE](LICENSE) file before using retina.bovw.plosone.
 
 Table of Contents
 =================
@@ -70,7 +70,7 @@ Before run the code, it's necessary to download the datasets and organize some d
 
 'low_level_script.py' Usage
 ============================
-
+```
 Usage: low_level_script.py [options]
 options:
 -h : show options
@@ -94,10 +94,11 @@ options:
 -t1 threshold : define the threshold for trainig dataset (default 3500)
 -t2 threshold : define the threshold for test dataset (default 3500)
 -surf path : define the path to the surf algorithm (default ./ext/surf/surf.ln)
+```
 
 'create_codebooks.py' Usage
 ============================
-
+```
 Usage: create_codebooks.py [options]
 options:
 -h : show options
@@ -117,10 +118,11 @@ options:
 	dense  -- Dense low-level feature extraction
 -size s : length of the codebook (default 250 for sparse (resulting in a codebook of 500 codewords) and 125 for dense (resulting in a codebook of 1500 codewords))
 -kmeans path : define the path to the k-means algorithm (default ./ext/kmeans/kmltest)
+```
 
 'mid_level_script.py' Usage
 ============================
-
+```
 Usage: mid_level_script.py [options]
 options:
 -h : show options
@@ -145,10 +147,11 @@ options:
 	semi -- Semi-Soft-Sum coding/pooling
 	soft -- Soft-Max coding/pooling
 -i image : define the image name (used only for cases where we are interested in describing only one image)
+```
 
 'classification.py' Usage
 ============================
-
+```
 Usage: classification.py [options]
 options:
 -h : show options
@@ -174,10 +177,11 @@ options:
 	soft -- Soft-Max coding/pooling
 -svm path : define the path to the svm algorithm (default ./ext/svm/)
 -plot : use this parameter to plot the ROC curves (default False)
+```
 
 'classify_image.py' Usage
 ============================
-
+```
 Usage: classify_image.py [options]
 options:
 -h : show options
@@ -198,10 +202,11 @@ options:
 	soft -- Soft-Max coding/pooling
 -o offset : define a specific offset of the hyperplane (use only when select a specific DR-related lesion)
 -svm path : define the path to the svm algorithm (default ./ext/svm/)
+```
 
 'referral.py' Usage
 ============================
-
+```
 Usage: referral.py [options]
 options:
 -h : show options
@@ -214,6 +219,7 @@ options:
 	soft -- Soft-Max coding/pooling
 -svm path : define the path to the svm algorithm (default ./ext/svm/)
 -plot : use this parameter to plot the ROC curves (default False)
+```
 
 Tips on Practical Use
 ============================
@@ -275,12 +281,12 @@ Additional Information
 
 If you find retina.bovw.plosone helpful, please cite it as
 
-Pires, Ramon; F. Jelinek, Herbert; Wainer, Jacques; Valle, Eduardo; Rocha, Anderson (In Press): Advancing Bag-of-Visual-Words Representations for Lesion Classification in Retinal Images. PLOS ONE
+Pires, Ramon; F. Jelinek, Herbert; Wainer, Jacques; Valle, Eduardo; Rocha, Anderson (In Press): Advancing Bag-of-Visual-Words Representations for Lesion Classification in Retinal Images. PLOS ONE.
 
 retina.bovw.plosone implementation document is available at
-http://www.recod.ic.unicamp.br/~piresramon
+[http://www.recod.ic.unicamp.br/~piresramon](http://www.recod.ic.unicamp.br/~piresramon)
 
-For any questions and comments, please email pires.ramon@ic.unicamp.br
+For any questions and comments, please email <mailto:pires.ramon@ic.unicamp.br>
 
 Acknowledgments:
 This work was supported in part by São Paulo Research Foundation FAPESP (http://www.fapesp.br) under Grant 2010/05647-4 and Grant 2011/15349-3, National Counsel of Technological and Scientific Development (CNPq) (http://www.cnpq.br) under Grant 307018/2010-5 and Grant 304352/2012-8, Microsoft Research (http://research.microsoft.com) and Samsung Eletrônica da Amazônia (http://www.samsung.com). The funders had no role in study design, data collection and analysis, decision to publish, or preparation of the manuscript.
